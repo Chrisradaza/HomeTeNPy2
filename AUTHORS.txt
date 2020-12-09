@@ -1,0 +1,18 @@
+The following people are part of the TeNPy developer team.
+The full list of contributors can be obtained from the git repository with ``git shortlog -sn``.
+
+Johannes Hauschild        tenpy@johannes-hauschild.de
+Frank Pollmann
+Michael P. Zaletel
+Maximilian Schulz
+Leon Schoonderwoerd
+Kévin Hémery
+Samuel Scalet
+Markus Drescher
+Wilhelm Kadow
+Gunnar Moeller
+Jakob Unfried
+Yu-Chin Tzeng
+
+Further, the code is based on an earlier version of the library, mainly developed by
+Frank Pollmann, Michael P. Zaletel and Roger S. K. Mong.

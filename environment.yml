@@ -1,0 +1,14 @@
+name: tenpy
+channels:
+  - default
+dependencies:
+  - python>=3.6
+  - numpy>=1.13
+  - scipy>=0.18
+  - mkl
+  - cython>=0.29
+  - bottleneck
+  - pip
+  - setuptools>=30.3.0
+  - h5py
+  - pyyaml

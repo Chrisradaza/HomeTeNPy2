@@ -13,11 +13,11 @@ import matplotlib as mpl
 import argparse
 import os
 
-from HomeTeNPy.networks.mps import MPS, build_initial_state#,from_product_state
-import HomeTeNPy.networks.mpo as MPO
-import HomeTeNPy.algorithms.dmrg as dmrg
-import HomeTeNPy.models.hofstadter_v5 as mod
-import HomeTeNPy.tools.misc as misc
+from tenpy.networks.mps import MPS, build_initial_state#,from_product_state
+import tenpy.networks.mpo as MPO
+import tenpy.algorithms.dmrg as dmrg
+import tenpy.models.hofstadter_v5 as mod
+import tenpy.tools.misc as misc
 
 
 def cleanup_output(out):

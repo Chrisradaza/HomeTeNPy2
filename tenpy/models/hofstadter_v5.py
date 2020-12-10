@@ -170,8 +170,9 @@ class HofstadterFermions(CouplingMPOModel):
         'conserve': 'N', # What is Conserved? N?
         'fill_top': 1,
         'fill_bot': 3,
-        'bc_MPS': 'infinite',
-        'bc': 'periodic',
+        'bc_MPS': 'infinite', #MPS boundary Condition
+        # 'bc_x': 'periodic',
+        'bc_y': 'cylinder',
         'order': 'default',
         'Ly': 3, #Number of magnetic unit cells in the y direction
         'Lx': 1, #Number of magnetic unit cells in the x direction
@@ -181,9 +182,10 @@ class HofstadterFermions(CouplingMPOModel):
         'verbose': 1,
         'flux_p': 1,
         'flux_q': 3,
-        'var_u': 1,
+        # 'var_u': 1,
         'order': 'default',
         'my': 1,
+
     
 
 	    }
@@ -193,7 +195,7 @@ class HofstadterFermions(CouplingMPOModel):
 
     def init_sites(self, model_params):
         conserve = model_params.get('conserve', self.defaults['conserve'])
-        filling = model_params.get('filling', (self.defaults['fill_top'], self.defaults['fill_bot']))
+        filling = model_params.get('filling', (model_params.get('fill_top',self.defaults['fill_top']), model_params.get('fill_bot',self.defaults['fill_bot'])))
         filling = float(filling[0]) / filling[1]
         print('init sites check ',filling) 
         site = FermionSite(conserve=conserve, filling=filling)

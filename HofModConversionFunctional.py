@@ -56,7 +56,7 @@ def dmrg_wrapper(model_par, sim_par, run_par, args, psi=None, sim_filename=None,
     """
     print ("chi's in use:", sim_par['CHI_LIST'])
     print ("minimum no. of sweeps:", sim_par['MIN_STEPS'])
-    print ('dmrg_wrapper has bc={}'.format(model_par['bc']))
+    print ('dmrg_wrapper has bc={}'.format(model_par['bc_MPS']))
 
     # Check if there is already a data file from a finished run
     try:
@@ -66,6 +66,7 @@ def dmrg_wrapper(model_par, sim_par, run_par, args, psi=None, sim_filename=None,
             print ("Simulation was shelved. Restarting soon.")
         else:
             print ("Finished data file found. Skipping.")
+            print('Check for {skip:True}')
             return None, {'skip':True}, None, None, None  # Not very clean but haven't found anything better
     except IOError:
         print ("No data file found. Starting new sim.")
@@ -91,7 +92,7 @@ def dmrg_wrapper(model_par, sim_par, run_par, args, psi=None, sim_filename=None,
             #L = model_par['Lx'] * model_par['Ly']
             # upfilling, dnfilling = get_filling(run_par, L)
             # prod = random_list(L, upfilling, dnfilling)
-            psi = MPS.from_product_state(M.lat.mps_sites(), initial_state , bc=model_par['bc_MPS'])#psi =  MPS.from_product_state(M.lat.mps_sites(), initial_state, dtype=complex, conserve=M, bc=model_par['bc'])
+            psi = MPS.from_product_state(M.lat.mps_sites(), initial_state , bc=model_par['bc_MPS'])
         else:
             print ("Using user-specified psi.")
         num_ini = psi.expectation_value('N')
@@ -108,21 +109,21 @@ def dmrg_wrapper(model_par, sim_par, run_par, args, psi=None, sim_filename=None,
     # sim.ground_state()
     # out = sim.sim_stats[-1]
 
-#     if out['shelve_flag']:  # DMRG did not end before time ran out; save sim to disk
-#         save_sim = {
-#             'LP': out['LP'],
-#             'RP': out['RP'],
-#             'psi': psi,
-#             'M': M,
-#             'num_ini': num_ini,
-#             'initial_state': initial_state,
-#             'model_par': model_par,
-#             'sim_par': sim_par,
-#         }
-#         with open('fh_dmrg_' + identifier + '.sim', 'wb') as f:
-#             pickle.dump(save_sim, f)
+    # if out['shelve_flag']:  # DMRG did not end before time ran out; save sim to disk
+    #     save_sim = {
+    #         'LP': out['LP'],
+    #         'RP': out['RP'],
+    #         'psi': psi,
+    #         'M': M,
+    #         'num_ini': num_ini,
+    #         'initial_state': initial_state,
+    #         'model_par': model_par,
+    #         'sim_par': sim_par,
+    #     }
+    #     with open('fh_dmrg_' + identifier + '.sim', 'wb') as f:
+    #         pickle.dump(save_sim, f)
 
-        # out['skip'] = False
+    out['skip'] = False
 
     return psi, out, num_ini, M, initial_state
 
@@ -177,7 +178,8 @@ def dmrg_wrapper(model_par, sim_par, run_par, args, psi=None, sim_filename=None,
 
 def save_data(psi, M, args, initial_state, model_par, identifier, out, extra={}, save_state=False):
     # Check the particle density.
-    num = psi.expectation_value(M.N)
+    num = psi.expectation_value('N') #This is a problem section, Treid M.lat.N_sites at Console 6 
+    #and M.N_MPS at Console 5.  Console 7 gives the normal output. Console 8 gives the 'N' result (unclear if this works. P.S. it works)
     print (num)
     if args.plots:
         plt.plot(num, label='After DMRG')
@@ -301,6 +303,9 @@ if __name__ == '__main__':
     # Do the g.s. calculations (using above-defined functions)
     model_par, sim_par, run_par, args = misc.setup_executable(mod.HofstadterFermions, run_defaults)
     
+    save_state = args.save_state
+    print('save state set to:', save_state)
+    
     sim_par.update({
         'STARTING_ENV_FROM_PSI': args.nolanczos_sweeps,
         'MIN_STEPS': args.min_steps,
@@ -312,9 +317,9 @@ if __name__ == '__main__':
         'N_MUC': float(run_par['N_MPS']) / (model_par['Lx'] * model_par['Ly']),
         'band_filling': float(run_par['N_MPS']) / (model_par['Lx'] * model_par['Ly']),
     })
-    print('sim_par', sim_par)
-    print('run_par', run_par)
-    print('model_par', model_par)    
+    # print('sim_par', sim_par)
+    # print('run_par', run_par)
+    # print('model_par', model_par)    
     identifier = run_par['identifier'] + '_N_MPS_{}'.format(run_par['N_MPS'])
     identifier += '_nolanczos_{}'.format(args.nolanczos_sweeps)
 #     if model_par['var_u'] == 0:
@@ -335,17 +340,18 @@ if __name__ == '__main__':
     else:
         psi_start = None
 
-    save_state = args.save_state
+
     sim_par['identifier'] = identifier
 
-    if model_par['bc'] == 'periodic' and run_par['init_finite']:  # Iitialize as finite size
+    if model_par['bc_x'] == 'periodic' and run_par['init_finite']:  # Iitialize as finite size
         print ('Initializing DMRG with finite bc.')
-        model_par['bc'] = 'finite'
+        model_par['bc_MPS'] = 'finite'
         psi, out, num_finite, M, initial_state = dmrg_wrapper(model_par, sim_par, run_par, args)
         print ('Now going to infinite.')
         psi.bc = 'periodic'
-        model_par['bc'] = 'periodic'
+        model_par['bc_x'] = 'periodic'
         psi, out, num_ini, M, initial_state = dmrg_wrapper(model_par, sim_par,run_par, args, psi)
+        print('Check for {skip:True} at 350', out['skip'])
         if not out['skip']:
             save_data(psi, M, args, initial_state, model_par, identifier, out, save_state=args.save_state)
 
@@ -354,6 +360,7 @@ if __name__ == '__main__':
         #psi = time_evolve(model_par, run_par, args)
         print ('psi has bond dimensions:', psi.chi)
         psi, out, num_ini, M, initial_state = dmrg_wrapper(model_par, sim_par, args, psi)
+        print('Check for {skip:True} at 359', out['skip'])
         if not out['skip']:
             save_data(psi, M, args, initial_state, model_par, identifier, out, save_state=args.save_state)
 
@@ -379,6 +386,7 @@ if __name__ == '__main__':
                 sim_par['MIN_STEPS'] = args.dsweeps
                 psi, out, num_ini, M, initial_state = dmrg_wrapper(model_par, sim_par, run_par, args, psi)
             sim_par['shelve_after_time'] -= out.get('time', 0) / 3600  # Subtract runtime from shelve time.
+            print('Check for {skip:True} at 385', out['skip'])
             if not out['skip']:
                 if chi != max_chi:
                     save_data(psi, M, args, initial_state, model_par, identifier, out, save_state=args.save_all)
@@ -388,6 +396,7 @@ if __name__ == '__main__':
     else:  # Default run
         sim_par['MIN_STEPS'] = args.min_steps  # Only works here
         psi, out, num_ini, M, initial_state = dmrg_wrapper(model_par, sim_par, run_par, args, psi=psi_start, sim_filename=identifier, reload_sim=args.reload_sim)
-#         if not out['skip']:  # Only save if we haven't yet; prevents endless overwriting
-#             save_data(psi, M, args, initial_state, model_par, identifier, out, save_state=args.save_state)
+        print('Check for {skip:True} at 395', out['skip'])
+        if not out['skip']:  # Only save if we haven't yet; prevents endless overwriting
+            save_data(psi, M, args, initial_state, model_par, identifier, out, save_state=args.save_state)
 

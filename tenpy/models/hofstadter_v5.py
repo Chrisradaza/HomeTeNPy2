@@ -171,7 +171,7 @@ class HofstadterFermions(CouplingMPOModel):
         'fill_top': 1,
         'fill_bot': 3,
         'bc_MPS': 'infinite', #MPS boundary Condition
-        # 'bc_x': 'periodic',
+        'bc_x': 'periodic',
         'bc_y': 'cylinder',
         'order': 'default',
         'Ly': 3, #Number of magnetic unit cells in the y direction
@@ -211,7 +211,7 @@ class HofstadterFermions(CouplingMPOModel):
         Lx = model_params.get('Lx', self.defaults['Lx'])*mx
         Ly = model_params.get('Ly', self.defaults['Ly'])*my
         bc_x = 'periodic' if bc_MPS == 'infinite' else 'open'
-        bc_x = model_params.get('bc_x', bc_x)
+        model_params.update({'bc_x': bc_x}) # updates bc_x in model_par 
         bc_y = model_params.get('bc_y', 'cylinder')
         assert bc_y in ['cylinder', 'ladder']
         bc_y = 'periodic' if bc_y == 'cylinder' else 'open'

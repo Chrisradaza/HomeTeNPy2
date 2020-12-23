@@ -204,19 +204,49 @@ def save_data(psi, M, args, initial_state, model_par, identifier, out, extra={},
     }
 
     if args.compute_spec:  # Get entanglement spectra
+        perm = []
+        for i in range(model_par['Lx'] * model_par['mx']):
+            for j in range(model_par['Ly'] * model_par['my']):
+                if j == 0:
+                    perm.append((i+1)*(model_par['Ly'] * model_par['my'])-1)
+                else:
+                    perm.append(i*(model_par['Ly'] * model_par['my'])+j-1)
+        print('perm =', perm)
+        oU, oW, q, ov, trunc_err = psi.compute_K(perm=perm, verbose=True)
+        k_spectrum = psi.compute_K(perm=perm, verbose=True)
+        print('compute_k: ov = ', ov, 'trunc_err', trunc_err)
+        xi = -np.log(np.absolute(oW))
+        k = np.angle(oW)
+    
+        sym = ('o', 's', 'D', '^', 'v', '<', '>', 'x', '+',
+                'p', '*', 'h', '8', 'H', '1', '2', '3', '4', 'X')
+        if q.block_number > len(sym):
+            sym = sym*2
+        print('# k/pi       xi             quantum numbers')
+        n = 0
+        for i in range(q.block_number):
+            q1 = q.charges[i][0]
+            # q2 = q.charges[i][1]
+            xx, kk = [], []
+            for j in range(q.slices[i+1]-q.slices[i]-1):
+                xx.append(xi[n])
+                kk.append(k[n])
+                print(k[n]/np.pi, xi[n], q1,)
+                n = n+1
+            
         spec = psi.entanglement_spectrum()  # Gets spectrum for all bonds without specifying.
-        spec_ring = spec[model_par['Ly'] - 1] # 15th bond cuts at a full ring when Ly = 8.
-        lowest = {}  # Will only be filled if -plots is set.
-        for q in spec_ring:
-            charge, vals = q
-            lowest[charge] = min(vals)
+        # spec_ring = spec[model_par['Ly'] - 1] # 15th bond cuts at a full ring when Ly = 8.
+        # lowest = {}  # Will only be filled if -plots is set.
+        # perm = (1, model_par['Ly'])  # single site shift.
+        # k_spectrum = psi.compute_K(perm=perm, verbose=True, swap_op='f')  # swapOp 'f' for fermions
+        # print (k_spectrum)
+        # for q in spec_ring:
+        #     charge, vals = q
+        #     lowest[charge] = min(vals)
         # Get momentum-resolved entanglement spectrum
-        perm = (1, model_par['Ly'])  # single site shift.
-        k_spectrum = psi.compute_K(perm=perm, verbose=True, swapOp='f')  # swapOp 'f' for fermions
-        print (k_spectrum)
         data.update({
             'spec': spec,
-            'lowest': lowest,
+            # 'lowest': lowest,
             'k_spec': k_spectrum,
             'perm': perm,
         })
@@ -257,12 +287,12 @@ def save_data(psi, M, args, initial_state, model_par, identifier, out, extra={},
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     if args.plots:
-        plt.figure()
-        for q in spec_ring:
-            # plt.plot(np.ones(len(q[1])) * q)
-            charge, vals = q
-            plt.plot(np.ones(len(vals)) * charge[0], vals, '_')
-        print (lowest)
+        # plt.figure()
+        # for q in spec_ring:
+        #     # plt.plot(np.ones(len(q[1])) * q)
+        #     charge, vals = q
+        #     plt.plot(np.ones(len(vals)) * charge[0], vals, '_')
+        # print (lowest)
 
         try:
             plt.title('Entanglement spectrum for fermionic Hofstadter model')
